@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 import { Task, Image } from "../models/index.js";
 import { ImageService } from "./ImageService.js";
+import { AppError } from "../errors/AppError.js";
+import { ErrorCodes } from "../errors/types.js";
 
 export class TaskService {
   constructor(private imageService = new ImageService("output")) {}
@@ -13,7 +15,13 @@ export class TaskService {
    */
   async processTaskImages(taskId: Types.ObjectId, originalPath: string): Promise<void> {
     const task = await Task.findById(taskId);
-    if (!task) return;
+    if (!task) {
+        throw new AppError(
+            `Task ${taskId} not found`, 
+            404, 
+            ErrorCodes.NOT_FOUND
+        );
+    }
 
     console.log(`Iniciando procesamiento de tarea ${taskId}`);
 
@@ -41,10 +49,10 @@ export class TaskService {
       }));
       await task.save();
 
-      console.log(`🎯 Tarea ${taskId} procesada exitosamente`);
+      console.log(`Tarea ${taskId} procesada exitosamente`);
 
     } catch (err: any) {
-      console.error(`Error procesando tarea ${taskId}:`, err);
+      console.error(`Error procesando tarea ${taskId}:`, err.message);
       task.status = "failed";
       task.error = String(err?.message ?? err);
       await task.save();

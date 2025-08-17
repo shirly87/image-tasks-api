@@ -2,6 +2,8 @@ import sharp, { Sharp } from "sharp";
 import crypto from "crypto";
 import path from "path";
 import fs from "fs/promises";
+import { AppError } from "../errors/AppError.js";
+import { ErrorCodes } from "../errors/types.js";
 
 type ResizeFit = "cover" | "contain" | "fill" | "inside" | "outside";
 
@@ -56,7 +58,6 @@ export class ImageService {
     console.log("Image info:", meta.format, meta.size, 'width:', meta.width, 'height:', meta.height);
   }
   
-
   /**
    * Genera variantes por ancho manteniendo aspect ratio y sin upscaling.
    * Guarda en: /output/{nombre}/{resolucion}/{md5}.{ext}
@@ -67,7 +68,11 @@ export class ImageService {
     opts: ProcessOptions = {}
   ): Promise<VariantInfo[]> {
     if (!resolutions?.length) {
-      throw new Error("Debe especificar al menos una resolución");
+      throw new AppError(
+        "At least one resolution must be specified", 
+        500, 
+        ErrorCodes.INTERNAL_ERROR
+      );
     }
 
     const { baseName, ext: originalExt } = this.getBaseNameAndExt(inputPathOrUrl);

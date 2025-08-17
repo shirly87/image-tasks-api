@@ -3,6 +3,8 @@ import { Task, Image, ITask } from '../models/index.js';
 import { Types } from 'mongoose';
 import { queue } from "../jobs/queue.js";
 import { taskService } from '../services/TaskService.js';
+import { AppError } from '../errors/AppError.js';
+import { ErrorCodes } from '../errors/types.js';
 
 interface ImageResponse {
     resolution: string;
@@ -22,26 +24,21 @@ interface GetTaskResponse {
     images?: ImageResponse[];
 }
 
-interface ErrorResponse {
-    error: string;
-}
-
 export class TaskController {
     
     /**
      * POST /tasks - Crear una nueva tarea de procesamiento
      */
     public static async createTask(req: Request, res: Response): Promise<void> {
-        try {
-            console.log("CWD:", process.cwd())
+            
             const { originalPath } = req.body;
             
             if (!originalPath || typeof originalPath !== 'string') {
-                const errorResponse: ErrorResponse = {
-                    error: 'originalPath is required and must be a string'
-                };
-                res.status(400).json(errorResponse);
-                return;
+                throw new AppError(
+                    'originalPath is required and must be a string', 
+                    400, 
+                    ErrorCodes.INVALID_INPUT
+                );
             }
             
             const price = Task.generateRandomPrice();
@@ -66,40 +63,40 @@ export class TaskController {
             //Encolar el caso de uso para procesar las imágenes
             queue.push(async () => {
                 await taskService.processTaskImages(savedTask._id as Types.ObjectId, originalPath);
-            });
-            
-        } catch (error) {
-            console.error('Error creating task:', error);
-            const errorResponse: ErrorResponse = {
-                error: 'Internal server error'
-            };
-            res.status(500).json(errorResponse);
-        }
+            });          
     }
     
     /**
      * GET /tasks/:taskId - Consultar estado de una tarea
      */
     public static async getTask(req: Request, res: Response): Promise<void> {
-        try {
+
             const { taskId } = req.params;
             
             if (!taskId) {
-                const errorResponse: ErrorResponse = {
-                    error: 'taskId is required'
-                };
-                res.status(400).json(errorResponse);
-                return;
+                throw new AppError(
+                    'taskId is required', 
+                    400, 
+                    ErrorCodes.INVALID_INPUT
+                );
+            }
+
+            if (!Types.ObjectId.isValid(taskId)) {
+                throw new AppError(
+                    'Invalid taskId format', 
+                    400, 
+                    ErrorCodes.INVALID_INPUT
+                );
             }
             
             const task = await Task.findById(taskId);
             
             if (!task || !task._id) {
-                const errorResponse: ErrorResponse = {
-                    error: 'Task not found'
-                };
-                res.status(404).json(errorResponse);
-                return;
+                throw new AppError(
+                    'Task not found', 
+                    404, 
+                    ErrorCodes.NOT_FOUND
+                );
             }
             
             const response: GetTaskResponse = {
@@ -118,12 +115,5 @@ export class TaskController {
             
             res.status(200).json(response);
             
-        } catch (error) {
-            console.error('Error getting task:', error);
-            const errorResponse: ErrorResponse = {
-                error: 'Internal server error'
-            };
-            res.status(500).json(errorResponse);
-        }
     }
 }
