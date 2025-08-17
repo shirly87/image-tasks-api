@@ -6,6 +6,10 @@ export interface ImageReference {
   md5: string;
 }
 
+interface TaskModel extends mongoose.Model<ITask> {
+  generateRandomPrice(): number;
+}
+
 const imageReferenceSchema = new Schema<ImageReference>({
   resolution: {
     type: String,
@@ -93,4 +97,4 @@ taskSchema.methods.addProcessedImage = function(resolution: string, path: string
   this.updatedAt = new Date();
 };
 
-export const Task = mongoose.model<ITask>('Task', taskSchema);
+export const Task = mongoose.model<ITask, TaskModel>('Task', taskSchema);

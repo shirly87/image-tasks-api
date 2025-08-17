@@ -1,4 +1,5 @@
 import express from 'express';
+import tasksRouter from './tasks.js';
 
 const router = express.Router();
 
@@ -8,5 +9,7 @@ router.get('/v1', (_req, res) => {
         version: `Image Tasks API ${version}`
     });
 });
+
+router.use('/tasks', tasksRouter);
 
 export default router;

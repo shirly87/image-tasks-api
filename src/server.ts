@@ -1,13 +1,22 @@
 import app from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
+import { requeuePendingTasks } from './bootstrap/requeuePending.js';
 
 const PORT = env.PORT ?? 4000;
 const NODE_ENV = env.NODE_ENV ?? 'development';
 
 const startServer = async (): Promise<void> => {
     try {
+        //Conectar a la base de datos
         await connectDatabase();
+
+        //Encolar tareas pendientes
+        try {
+            await requeuePendingTasks();
+        } catch (e) {
+            console.error("[requeue] startup error:", e);
+        }
         
         const server = app.listen(PORT, () => {
             console.log(`API is running on port ${PORT} in ${NODE_ENV} mode`);

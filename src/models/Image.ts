@@ -29,8 +29,7 @@ const imageSchema = new Schema<IImage>({
   md5: {
     type: String,
     required: true,
-    trim: true,
-    unique: true
+    trim: true
   }
 }, {
   timestamps: { createdAt: true, updatedAt: false },
