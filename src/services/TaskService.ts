@@ -8,10 +8,13 @@ export class TaskService {
   constructor(private imageService = new ImageService("output")) {}
 
   /**
-   * Caso de uso: procesar imágenes de la Task.
+   * Procesa imágenes de una tarea especifica.
    * - Mantiene aspect ratio (fit: inside)
-   * - Evita upscaling (withoutEnlargement: true)
    * - Persiste imágenes y estados (completed/failed) en la Task
+   * @param taskId - ID de la tarea a procesar
+   * @param originalPath - Ruta local de la imagen original
+   * @returns Promise<void> - Actualiza estado de tarea y crea variantes si la tarea se completa correctamente
+   * @throws AppError - Si la tarea no existe
    */
   async processTaskImages(taskId: Types.ObjectId, originalPath: string): Promise<void> {
     const task = await Task.findById(taskId);
@@ -23,12 +26,9 @@ export class TaskService {
         );
     }
 
-    console.log(`Iniciando procesamiento de tarea ${taskId}`);
-
     try {
       const variants = await this.imageService.processImage(originalPath, [1024, 800], {
-        fit: "inside",
-        withoutEnlargement: true
+        fit: "inside"
       });
 
       await Image.insertMany(
@@ -48,8 +48,6 @@ export class TaskService {
         md5: v.md5
       }));
       await task.save();
-
-      console.log(`Tarea ${taskId} procesada exitosamente`);
 
     } catch (err: any) {
       console.error(`Error procesando tarea ${taskId}:`, err.message);

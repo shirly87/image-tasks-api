@@ -75,26 +75,4 @@ taskSchema.statics.generateRandomPrice = function(): number {
     return parseFloat((Math.random() * (50 - 5) + 5).toFixed(2));
 };
 
-taskSchema.methods.updateStatus = function(status: 'pending' | 'completed' | 'failed', error?: string): void {
-  this.status = status;
-  if (error) {
-    this.error = error;
-  }
-  this.updatedAt = new Date();
-};
-
-taskSchema.methods.addProcessedImage = function(resolution: string, path: string, md5: string): void {
-  if (!this.images) {
-    this.images = [];
-  }
-  
-  this.images.push({
-    resolution,
-    path,
-    md5
-  });
-  
-  this.updatedAt = new Date();
-};
-
 export const Task = mongoose.model<ITask, TaskModel>('Task', taskSchema);
